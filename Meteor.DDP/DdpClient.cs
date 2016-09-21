@@ -15,6 +15,7 @@ namespace Meteor.DDP
     {
         public event EventHandler<DdpMessageEventArgs> Message;
         public event EventHandler<DdpMeteorErrorEventArgs> MeteorError;
+        public event EventHandler<DdpMeteorErrorEventArgs> MessageParserError;
         public event EventHandler<DdpClientErrorEventArgs> ClientError;
         public event EventHandler<DdpMethodUpdatedEventArgs> MethodUpdated;
         public event EventHandler<DdpMethodResultEventArgs> MethodResult;
@@ -179,7 +180,9 @@ namespace Meteor.DDP
                                             this.Message(this, new DdpMessageEventArgs(message.id.ToString(), message.msg.ToString(), message.collection.ToString(), message.fields));
                                     }
                                     else
-                                        throw new DdpClientException("Unrecognized message: " + message.ToString());
+                                    {
+                                        this.MessageParserError?.Invoke(this, new DdpMeteorErrorEventArgs("Unrecognized message", message));
+                                    }
                                     break;
                             }
                         }
