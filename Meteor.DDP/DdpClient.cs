@@ -83,12 +83,12 @@ namespace Meteor.DDP
         public async Task SubscribeAsync(String subId, String method, params dynamic[] args)
         {
             await this.Send(new
-                {
-                    msg = "sub",
-                    name = method,
-                    @params = args,
-                    id = subId
-                }
+            {
+                msg = "sub",
+                name = method,
+                @params = args,
+                id = subId
+            }
             );
         }
 
@@ -96,7 +96,7 @@ namespace Meteor.DDP
         {
             ArraySegment<byte> segment = new ArraySegment<byte>(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message)));
 
-            using(await this._sendLock.LockAsync())
+            using (await this._sendLock.LockAsync())
             {
                 await this._socket.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None);
             }
@@ -126,15 +126,19 @@ namespace Meteor.DDP
                         stream.Write(buffer, start, result.Count);
                         msg = Encoding.UTF8.GetString(stream.ToArray());
                         dynamic message = JsonConvert.DeserializeObject<dynamic>(msg);
-                        
+
                         if (this._sessionId == null)
-                            this._sessionId = message.session;
-                        else if(message == null || message.msg == null)
                         {
-                            if(message.server_id == null)
-                                throw new DdpClientException(String.Format("Unknown message: {0}", message));
+                            this._sessionId = (string)message["session"];
                         }
-                        else
+                        else if (message != null && message["msg"] == null)
+                        {
+                            if (message["server_id"] == null)
+                            {
+                                throw new DdpClientException(String.Format("Unknown message: {0}", message));
+                            }
+                        }
+                        else if (message != null)
                         {
                             String msgType = message.msg.ToString();
 
@@ -207,7 +211,7 @@ namespace Meteor.DDP
 
         public void Dispose()
         {
-            if (this._socket != null) 
+            if (this._socket != null)
             {
                 this._socket.Dispose();
             }
